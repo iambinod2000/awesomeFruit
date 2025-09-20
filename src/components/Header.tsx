@@ -2,10 +2,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, User, LogIn } from 'lucide-react';
+import { ShoppingCart, User, LogIn, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const location = useLocation();
+  const { user, signOut, loading } = useAuth();
 
   return (
     <header className="bg-background border-b border-border sticky top-0 z-50">
@@ -51,17 +53,38 @@ const Header = () => {
                 <ShoppingCart className="h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/login">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/login">
-              <Button variant="default" size="sm">
-                <LogIn className="h-4 w-4 mr-2" />
-                Login
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={signOut}
+                  disabled={loading}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="default" size="sm">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Login
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
