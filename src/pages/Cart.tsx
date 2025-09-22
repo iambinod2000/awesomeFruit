@@ -3,75 +3,67 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-  weight: string;
-}
+import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 
 const Cart = () => {
   const { toast } = useToast();
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      name: "Fresh Strawberries",
-      price: 4.99,
-      image: "/placeholder.svg",
-      quantity: 2,
-      weight: "250g"
-    },
-    {
-      id: "2", 
-      name: "Mixed Berry Bowl",
-      price: 7.99,
-      image: "/placeholder.svg",
-      quantity: 1,
-      weight: "400g"
-    },
-    {
-      id: "3",
-      name: "Tropical Fruit Mix",
-      price: 9.99,
-      image: "/placeholder.svg",
-      quantity: 1,
-      weight: "500g"
-    }
-  ]);
+  const { user } = useAuth();
+  const { items: cartItems, updateQuantity, removeItem, totalPrice, checkout } = useCart();
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState({
+    first_name: '',
+    last_name: '',
+    phone: '',
+    address: ''
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-    toast({
-      title: "Item removed",
-      description: "Item has been removed from your cart",
-    });
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = 2.99;
-  const total = subtotal + shipping;
+  const total = totalPrice + shipping;
 
-  const handleCheckout = () => {
-    toast({
-      title: "Checkout initiated",
-      description: "Redirecting to payment...",
-    });
+  const handleCheckout = async () => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please login to place an order",
+        variant: "destructive"
+      });
+      window.location.href = '/login';
+      return;
+    }
+    setShowCheckout(true);
+  };
+
+  const processCheckout = async () => {
+    if (!customerInfo.first_name || !customerInfo.address) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    const result = await checkout(customerInfo);
+    setIsProcessing(false);
+
+    if (result.success) {
+      setShowCheckout(false);
+      setCustomerInfo({ first_name: '', last_name: '', phone: '', address: '' });
+      toast({
+        title: "Order placed successfully!",
+        description: "Thank you for your order. We'll process it shortly.",
+      });
+    }
   };
 
   return (
@@ -104,20 +96,20 @@ const Cart = () => {
                   <CardContent className="p-6">
                     <div className="flex gap-4">
                       <img
-                        src={item.image}
-                        alt={item.name}
+                        src={item.product.image_url || '/placeholder.svg'}
+                        alt={item.product.name}
                         className="w-20 h-20 rounded-lg object-cover"
                       />
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h3 className="font-semibold text-foreground">{item.name}</h3>
-                            <Badge variant="secondary" className="mt-1">{item.weight}</Badge>
+                            <h3 className="font-semibold text-foreground">{item.product.name}</h3>
+                            <Badge variant="secondary" className="mt-1">{item.product.category || 'Product'}</Badge>
                           </div>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => removeItem(item.product.id)}
                             className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -130,7 +122,7 @@ const Cart = () => {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                             >
                               <Minus className="w-3 h-3" />
                             </Button>
@@ -139,14 +131,14 @@ const Cart = () => {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                             >
                               <Plus className="w-3 h-3" />
                             </Button>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-lg">${(item.price * item.quantity).toFixed(2)}</p>
-                            <p className="text-sm text-muted-foreground">${item.price.toFixed(2)} each</p>
+                            <p className="font-semibold text-lg">${(item.product.price * item.quantity).toFixed(2)}</p>
+                            <p className="text-sm text-muted-foreground">${item.product.price.toFixed(2)} each</p>
                           </div>
                         </div>
                       </div>
@@ -165,7 +157,7 @@ const Cart = () => {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between">
                     <span>Subtotal ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>${totalPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping</span>
@@ -195,6 +187,78 @@ const Cart = () => {
             </div>
           </div>
         )}
+
+        {/* Checkout Dialog */}
+        <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Complete Your Order</DialogTitle>
+              <DialogDescription>
+                Please provide your details to complete the checkout
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="first_name">First Name *</Label>
+                  <Input
+                    id="first_name"
+                    value={customerInfo.first_name}
+                    onChange={(e) => setCustomerInfo({...customerInfo, first_name: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="last_name">Last Name</Label>
+                  <Input
+                    id="last_name"
+                    value={customerInfo.last_name}
+                    onChange={(e) => setCustomerInfo({...customerInfo, last_name: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={customerInfo.phone}
+                  onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="address">Delivery Address *</Label>
+                <Input
+                  id="address"
+                  value={customerInfo.address}
+                  onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>${totalPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Shipping:</span>
+                  <span>${shipping.toFixed(2)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-semibold">
+                  <span>Total:</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+              </div>
+              <Button 
+                className="w-full" 
+                onClick={processCheckout}
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Processing...' : 'Place Order'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
 
       <Footer />
