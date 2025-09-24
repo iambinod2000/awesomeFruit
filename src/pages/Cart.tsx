@@ -53,7 +53,7 @@ const Cart = () => {
     }
 
     setIsProcessing(true);
-    const result = await checkout(customerInfo);
+    const result = await checkout(customerInfo, user);
     setIsProcessing(false);
 
     if (result.success) {

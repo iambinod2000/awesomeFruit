@@ -1,5 +1,4 @@
-import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useState, useEffect, useContext, createContext, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/hooks/useProducts';
@@ -18,14 +17,13 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
-  checkout: (customerInfo: any) => Promise<{ success: boolean; orderId?: string }>;
+  checkout: (customerInfo: any, user: any) => Promise<{ success: boolean; orderId?: string }>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const { user } = useAuth();
   const { toast } = useToast();
 
   // Load cart from localStorage on mount
@@ -91,7 +89,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
-  const checkout = async (customerInfo: any) => {
+  const checkout = useCallback(async (customerInfo: any, user: any) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -181,7 +179,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       });
       return { success: false };
     }
-  };
+  }, [items, totalPrice, toast]);
 
   return (
     <CartContext.Provider value={{
@@ -205,4 +203,23 @@ export const useCart = () => {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
+};
+
+// Hook that combines cart and auth for easier usage
+export const useCartWithAuth = () => {
+  const cart = useCart();
+  
+  // Import useAuth here so it's only used when this hook is called
+  const { useAuth } = require('./useAuth');
+  const { user } = useAuth();
+  
+  const checkoutWithAuth = useCallback(async (customerInfo: any) => {
+    return cart.checkout(customerInfo, user);
+  }, [cart.checkout, user]);
+  
+  return {
+    ...cart,
+    checkout: checkoutWithAuth,
+    user
+  };
 };
