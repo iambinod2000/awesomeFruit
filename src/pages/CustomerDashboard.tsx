@@ -1,5 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrders } from '@/hooks/useOrders';
+import { useCustomers } from '@/hooks/useCustomers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +10,50 @@ import { Link } from 'react-router-dom';
 
 const CustomerDashboard = () => {
   const { user, signOut } = useAuth();
+  const { orders, loading: ordersLoading } = useOrders();
+  const { customers } = useCustomers();
+
+  // Find current user's profile to get customer_id for filtering orders
+  const currentUserProfile = customers.find(customer => customer.user_id === user?.id);
+  
+  // Filter orders to show only current user's orders
+  const customerOrders = orders.filter(order => 
+    order.customer_id === currentUserProfile?.id || 
+    order.customer_email === user?.email
+  );
+
+  const activeOrders = customerOrders.filter(order => 
+    order.status === 'pending' || order.status === 'processing'
+  ).length;
+
+  const recentOrders = customerOrders.slice(0, 3);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'completed': return 'default';
+      case 'processing': return 'secondary';
+      case 'pending': return 'outline';
+      case 'cancelled': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Completed';
+      case 'processing': return 'In Transit';
+      case 'pending': return 'Processing';
+      case 'cancelled': return 'Cancelled';
+      default: return status;
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -50,7 +96,9 @@ const CustomerDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <Badge variant="outline">3 Active Orders</Badge>
+                <Badge variant="outline">
+                  {ordersLoading ? 'Loading...' : `${activeOrders} Active Orders`}
+                </Badge>
                 <Link to="/orders">
                   <Button variant="ghost" size="sm">View All</Button>
                 </Link>
@@ -100,29 +148,29 @@ const CustomerDashboard = () => {
             <CardDescription>Your latest orders and activities</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-2 border-b">
-                <div>
-                  <p className="font-medium">Order #12345</p>
-                  <p className="text-sm text-muted-foreground">2 items • Delivered today</p>
-                </div>
-                <Badge>Completed</Badge>
+            {ordersLoading ? (
+              <div className="text-center py-4">Loading recent activity...</div>
+            ) : recentOrders.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                No recent orders. <Link to="/products" className="text-primary hover:underline">Start shopping!</Link>
               </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <div>
-                  <p className="font-medium">Order #12344</p>
-                  <p className="text-sm text-muted-foreground">5 items • Out for delivery</p>
-                </div>
-                <Badge variant="secondary">In Transit</Badge>
+            ) : (
+              <div className="space-y-4">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                    <div>
+                      <p className="font-medium">Order #{order.order_number}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatCurrency(order.total_amount)} • {new Date(order.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant={getStatusBadgeVariant(order.status)}>
+                      {getStatusDisplay(order.status)}
+                    </Badge>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between py-2">
-                <div>
-                  <p className="font-medium">Order #12343</p>
-                  <p className="text-sm text-muted-foreground">3 items • Processing</p>
-                </div>
-                <Badge variant="outline">Processing</Badge>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </main>

@@ -12,6 +12,7 @@ import Products from "./pages/Products";
 import About from "./pages/About";
 import Login from "./pages/Login";
 import Cart from "./pages/Cart";
+import Orders from "./pages/Orders";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -70,6 +71,7 @@ const AppRoutes = () => (
     <Route path="/about" element={<About />} />
     <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
     <Route path="/cart" element={<Cart />} />
+    <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
     <Route path="/dashboard" element={<DashboardRoute />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
