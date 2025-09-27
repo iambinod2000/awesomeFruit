@@ -13,6 +13,7 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import Cart from "./pages/Cart";
 import Orders from "./pages/Orders";
+import Favorites from "./pages/Favorites";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -72,6 +73,7 @@ const AppRoutes = () => (
     <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
     <Route path="/cart" element={<Cart />} />
     <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+    <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
     <Route path="/dashboard" element={<DashboardRoute />} />
     <Route path="*" element={<NotFound />} />
   </Routes>

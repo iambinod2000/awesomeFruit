@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useFavorites } from '@/hooks/useFavorites';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ const CustomerDashboard = () => {
   const { user, signOut } = useAuth();
   const { orders, loading: ordersLoading } = useOrders();
   const { customers } = useCustomers();
+  const { favorites } = useFavorites();
 
   // Find current user's profile to get customer_id for filtering orders
   const currentUserProfile = customers.find(customer => customer.user_id === user?.id);
@@ -116,7 +118,7 @@ const CustomerDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <Badge variant="outline">12 Items</Badge>
+                <Badge variant="outline">{favorites.length} Items</Badge>
                 <Link to="/favorites">
                   <Button variant="ghost" size="sm">View All</Button>
                 </Link>

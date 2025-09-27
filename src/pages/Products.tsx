@@ -9,6 +9,7 @@ import { Search, Filter, Heart, Plus, Star } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const categories = [
   { id: 'all', name: 'All Products' },
@@ -24,6 +25,7 @@ const Products = () => {
   const { products, loading } = useProducts();
   const { addItem } = useCart();
   const { user } = useAuth();
+  const { isFavorite, addToFavorites, removeFromFavorites } = useFavorites();
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
@@ -37,6 +39,33 @@ const Products = () => {
       return;
     }
     addItem(product);
+  };
+
+  const handleFavoriteToggle = (productId: string) => {
+    if (!user) {
+      window.location.href = '/login';
+      return;
+    }
+    
+    if (isFavorite(productId)) {
+      removeFromFavorites(productId);
+    } else {
+      addToFavorites(productId);
+    }
+  };
+
+  const renderStars = (rating: number | null) => {
+    const stars = [];
+    const actualRating = rating || 3;
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Star
+          key={i}
+          className={`h-4 w-4 ${i <= actualRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+        />
+      );
+    }
+    return stars;
   };
 
   return (
@@ -118,13 +147,14 @@ const Products = () => {
                       )}
                     </div>
                   
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-3 right-3 bg-white/80 hover:bg-white"
-                  >
-                    <Heart className="h-4 w-4" />
-                  </Button>
+                   <Button
+                     size="icon"
+                     variant="ghost"
+                     className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+                     onClick={() => handleFavoriteToggle(product.id)}
+                   >
+                     <Heart className={`h-4 w-4 ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                   </Button>
                 </div>
               </CardHeader>
               
@@ -133,11 +163,15 @@ const Products = () => {
                   {product.name}
                 </CardTitle>
                 
-                <p className="text-sm text-muted-foreground">{product.description}</p>
-                
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline">Stock: {product.stock_quantity}</Badge>
-                </div>
+                 <p className="text-sm text-muted-foreground">{product.description}</p>
+                 
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center space-x-1">
+                     {renderStars(product.health_rating)}
+                     <span className="text-xs text-muted-foreground ml-1">Health Rating</span>
+                   </div>
+                   <Badge variant="outline">Stock: {product.stock_quantity}</Badge>
+                 </div>
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">

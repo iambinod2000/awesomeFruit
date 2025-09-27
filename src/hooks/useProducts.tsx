@@ -10,6 +10,7 @@ export interface Product {
   category: string | null;
   stock_quantity: number;
   image_url: string | null;
+  health_rating: number | null;
   created_at: string;
   updated_at: string;
 }

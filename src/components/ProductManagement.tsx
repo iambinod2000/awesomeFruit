@@ -20,7 +20,8 @@ const ProductManagement = () => {
     price: '',
     category: '',
     stock_quantity: '',
-    image_url: ''
+    image_url: '',
+    health_rating: '3'
   });
 
   const resetForm = () => {
@@ -30,7 +31,8 @@ const ProductManagement = () => {
       price: '',
       category: '',
       stock_quantity: '',
-      image_url: ''
+      image_url: '',
+      health_rating: '3'
     });
   };
 
@@ -43,7 +45,8 @@ const ProductManagement = () => {
       price: parseFloat(formData.price),
       category: formData.category || null,
       stock_quantity: parseInt(formData.stock_quantity) || 0,
-      image_url: formData.image_url || null
+      image_url: formData.image_url || null,
+      health_rating: parseInt(formData.health_rating) || 3
     };
 
     if (editingProduct) {
@@ -64,7 +67,8 @@ const ProductManagement = () => {
       price: product.price.toString(),
       category: product.category || '',
       stock_quantity: product.stock_quantity.toString(),
-      image_url: product.image_url || ''
+      image_url: product.image_url || '',
+      health_rating: (product.health_rating || 3).toString()
     });
   };
 
@@ -148,6 +152,17 @@ const ProductManagement = () => {
                     type="number"
                     value={formData.stock_quantity}
                     onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="health_rating">Health Rating (1-5 stars)</Label>
+                  <Input
+                    id="health_rating"
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={formData.health_rating}
+                    onChange={(e) => setFormData({ ...formData, health_rating: e.target.value })}
                   />
                 </div>
                 <Button type="submit" className="w-full">
@@ -258,6 +273,17 @@ const ProductManagement = () => {
                   type="number"
                   value={formData.stock_quantity}
                   onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-health_rating">Health Rating (1-5 stars)</Label>
+                <Input
+                  id="edit-health_rating"
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={formData.health_rating}
+                  onChange={(e) => setFormData({ ...formData, health_rating: e.target.value })}
                 />
               </div>
               <Button type="submit" className="w-full">
