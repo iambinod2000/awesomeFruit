@@ -3,9 +3,29 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Leaf, Award, Users, Clock, Shield } from 'lucide-react';
+import { Heart, Leaf, Award, Users, Clock, Shield, Star, Quote } from 'lucide-react';
+import { useReviews } from '@/hooks/useReviews';
 
 const About = () => {
+  const { reviews, loading } = useReviews();
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${
+              star <= rating
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -171,6 +191,56 @@ const About = () => {
               </Card>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Customer Reviews */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <Badge className="mb-4">Customer Reviews</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              What Our Customers Say
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Real experiences from real customers who love our fresh fruits
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="text-center text-muted-foreground">Loading reviews...</div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center text-muted-foreground">
+              No reviews yet. Be the first to share your experience!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {reviews.slice(0, 6).map((review) => (
+                <Card key={review.id} className="card-feature">
+                  <CardContent className="pt-6">
+                    <Quote className="h-8 w-8 text-primary/20 mb-4" />
+                    <div className="mb-4">{renderStars(review.rating)}</div>
+                    <p className="text-muted-foreground mb-4 line-clamp-4">
+                      "{review.comment}"
+                    </p>
+                    <div className="flex items-center gap-3 pt-4 border-t">
+                      <div className="w-10 h-10 bg-gradient-fresh rounded-full flex items-center justify-center">
+                        <Users className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">
+                          {review.profile?.first_name} {review.profile?.last_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
