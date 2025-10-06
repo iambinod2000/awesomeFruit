@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { User, ShoppingCart, Heart, Package, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ReviewForm from '@/components/ReviewForm';
 
 const CustomerDashboard = () => {
   const { user, signOut } = useAuth();
@@ -175,6 +176,10 @@ const CustomerDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        <div className="mt-8">
+          <ReviewForm />
+        </div>
       </main>
     </div>
   );

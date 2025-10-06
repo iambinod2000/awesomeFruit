@@ -9,10 +9,7 @@ export interface Review {
   comment: string;
   created_at: string;
   updated_at: string;
-  profile?: {
-    first_name: string | null;
-    last_name: string | null;
-  };
+  user_name?: string;
 }
 
 export const useReviews = () => {
@@ -23,19 +20,34 @@ export const useReviews = () => {
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
         .from('reviews')
-        .select(`
-          *,
-          profile:profiles!reviews_user_id_fkey(
-            first_name,
-            last_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setReviews(data || []);
+      if (reviewsError) throw reviewsError;
+
+      // Fetch profiles separately to get user names
+      const userIds = [...new Set(reviewsData?.map(r => r.user_id) || [])];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name')
+        .in('user_id', userIds);
+
+      // Merge the data
+      const reviewsWithNames = reviewsData?.map(review => {
+        const profile = profilesData?.find(p => p.user_id === review.user_id);
+        return {
+          ...review,
+          user_name: profile 
+            ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Anonymous'
+            : 'Anonymous'
+        };
+      });
+
+      setReviews(reviewsWithNames || []);
     } catch (error) {
       console.error('Error fetching reviews:', error);
       toast({

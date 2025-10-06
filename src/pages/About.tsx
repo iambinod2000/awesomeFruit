@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Leaf, Award, Users, Clock, Shield, Star, Quote } from 'lucide-react';
 import { useReviews } from '@/hooks/useReviews';
@@ -229,7 +229,7 @@ const About = () => {
                       </div>
                       <div>
                         <p className="font-semibold">
-                          {review.profile?.first_name} {review.profile?.last_name}
+                          {review.user_name || 'Anonymous'}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(review.created_at).toLocaleDateString()}
