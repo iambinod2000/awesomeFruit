@@ -42,34 +42,42 @@ const FeaturedProducts = () => {
   };
 
   if (loading) {
-    return (
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
+  return (
+    <section className="py-20 bg-gradient-to-b from-background via-muted/20 to-background relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 right-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-10 left-10 w-64 h-64 bg-secondary/5 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }}></div>
+      </div>
+      <div className="container mx-auto px-4 relative z-10">
           <div className="text-center">Loading products...</div>
         </div>
       </section>
     );
   }
   return (
-    <section className="py-20 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center space-y-4 mb-16">
-          <h2 className="text-4xl font-bold">Featured Products</h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Handpicked fresh fruits, cut and packed with love for your daily nutrition needs
-          </p>
+    <section className="py-20 bg-gradient-to-b from-background via-muted/20 to-background relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 right-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-10 left-10 w-64 h-64 bg-secondary/5 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }}></div>
+      </div>
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-12 space-y-2">
+          <h2 className="text-4xl lg:text-5xl font-bold text-gradient mb-4">Featured Products</h2>
+          <p className="text-muted-foreground text-lg">Handpicked fresh fruits for you</p>
+          <div className="w-20 h-1 bg-gradient-fresh mx-auto rounded-full"></div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {featuredProducts.map((product) => (
-            <Card key={product.id} className="card-product group cursor-pointer">
+            <Card key={product.id} className="card-product overflow-hidden group hover:scale-[1.02] transition-all duration-300 cursor-pointer">
               <CardHeader className="p-0">
                 <div className="relative overflow-hidden">
                   <img
                     src={product.image_url || '/placeholder.svg'}
                     alt={product.name}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   {product.stock_quantity === 0 && (
                     <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground">
                       Out of Stock
@@ -78,21 +86,21 @@ const FeaturedProducts = () => {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+                    className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm hover:bg-white shadow-md hover:scale-110 transition-transform duration-200"
                     onClick={(e) => handleFavoriteToggle(product.id, e)}
                   >
                     <Heart
-                      className={`h-4 w-4 ${
-                        isFavorite(product.id) ? 'fill-red-500 text-red-500' : ''
+                      className={`h-4 w-4 transition-all duration-200 ${
+                        isFavorite(product.id) ? 'fill-destructive text-destructive scale-110' : 'text-muted-foreground'
                       }`}
                     />
                   </Button>
                 </div>
               </CardHeader>
               
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-6 space-y-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                  <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
                     {product.name}
                   </CardTitle>
                   {renderStars(product.health_rating)}
@@ -112,7 +120,11 @@ const FeaturedProducts = () => {
                     <div className="text-xs text-muted-foreground">per kg</div>
                   </div>
                   
-                  <Button size="sm" className="shrink-0" disabled={product.stock_quantity === 0}>
+                  <Button 
+                    size="sm" 
+                    className="shrink-0 hover:scale-105 transition-transform duration-200" 
+                    disabled={product.stock_quantity === 0}
+                  >
                     <Plus className="h-4 w-4 mr-1" />
                     Add
                   </Button>
