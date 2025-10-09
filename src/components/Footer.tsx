@@ -4,18 +4,18 @@ import { Mail, Phone, MapPin, Facebook, Instagram, Twitter } from 'lucide-react'
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-br from-muted via-muted to-muted/80 mt-20 border-t border-border">
+    <footer className="bg-muted mt-20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
-            <Link to="/" className="flex items-center space-x-2 mb-4 group">
-              <div className="w-10 h-10 bg-gradient-fresh rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-110">
+            <Link to="/" className="flex items-center space-x-2 mb-4">
+              <div className="w-10 h-10 bg-gradient-fresh rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">A</span>
               </div>
-              <span className="text-2xl font-bold text-gradient group-hover:scale-105 transition-transform duration-300">Alluring</span>
+              <span className="text-2xl font-bold text-gradient">Alluring</span>
             </Link>
-            <p className="text-muted-foreground max-w-md leading-relaxed">
+            <p className="text-muted-foreground max-w-md">
               Fresh, premium cut fruits delivered to your doorstep. We're passionate about 
               providing the highest quality fruits with exceptional taste and nutrition.
             </p>
@@ -54,7 +54,7 @@ const Footer = () => {
                 href="https://facebook.com/alluring" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-125 hover:-translate-y-1"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <Facebook className="h-5 w-5" />
               </a>
@@ -62,7 +62,7 @@ const Footer = () => {
                 href="https://instagram.com/alluring" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-125 hover:-translate-y-1"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <Instagram className="h-5 w-5" />
               </a>
@@ -70,7 +70,7 @@ const Footer = () => {
                 href="https://twitter.com/alluring" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-125 hover:-translate-y-1"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <Twitter className="h-5 w-5" />
               </a>
