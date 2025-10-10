@@ -8,12 +8,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const ProductManagement = () => {
   const { products, loading, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { toast } = useToast();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -34,10 +40,67 @@ const ProductManagement = () => {
       image_url: '',
       health_rating: '3'
     });
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "Image size must be less than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return formData.image_url || null;
+
+    try {
+      setUploading(true);
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, imageFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const uploadedImageUrl = await uploadImage();
     
     const productData = {
       name: formData.name,
@@ -45,7 +108,7 @@ const ProductManagement = () => {
       price: parseFloat(formData.price),
       category: formData.category || null,
       stock_quantity: parseInt(formData.stock_quantity) || 0,
-      image_url: formData.image_url || null,
+      image_url: uploadedImageUrl,
       health_rating: parseInt(formData.health_rating) || 3
     };
 
@@ -70,6 +133,8 @@ const ProductManagement = () => {
       image_url: product.image_url || '',
       health_rating: (product.health_rating || 3).toString()
     });
+    setImagePreview(product.image_url || null);
+    setImageFile(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -165,8 +230,42 @@ const ProductManagement = () => {
                     onChange={(e) => setFormData({ ...formData, health_rating: e.target.value })}
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  Add Product
+                <div>
+                  <Label htmlFor="image">Product Image</Label>
+                  <div className="space-y-2">
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      onChange={handleImageChange}
+                      className="cursor-pointer"
+                    />
+                    {imagePreview && (
+                      <div className="relative w-32 h-32 border rounded-md overflow-hidden">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview(null);
+                            setFormData({ ...formData, image_url: '' });
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" disabled={uploading}>
+                  {uploading ? 'Uploading...' : 'Add Product'}
                 </Button>
               </form>
             </DialogContent>
@@ -275,20 +374,54 @@ const ProductManagement = () => {
                   onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
                 />
               </div>
-              <div>
-                <Label htmlFor="edit-health_rating">Health Rating (1-5 stars)</Label>
-                <Input
-                  id="edit-health_rating"
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={formData.health_rating}
-                  onChange={(e) => setFormData({ ...formData, health_rating: e.target.value })}
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Update Product
-              </Button>
+                <div>
+                  <Label htmlFor="edit-health_rating">Health Rating (1-5 stars)</Label>
+                  <Input
+                    id="edit-health_rating"
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={formData.health_rating}
+                    onChange={(e) => setFormData({ ...formData, health_rating: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-image">Product Image</Label>
+                  <div className="space-y-2">
+                    <Input
+                      id="edit-image"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      onChange={handleImageChange}
+                      className="cursor-pointer"
+                    />
+                    {imagePreview && (
+                      <div className="relative w-32 h-32 border rounded-md overflow-hidden">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview(null);
+                            setFormData({ ...formData, image_url: '' });
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" disabled={uploading}>
+                  {uploading ? 'Uploading...' : 'Update Product'}
+                </Button>
             </form>
           </DialogContent>
         </Dialog>
