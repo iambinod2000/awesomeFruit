@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useProducts, Product } from '@/hooks/useProducts';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Edit, Trash2, Upload, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const ProductManagement = () => {
@@ -17,7 +17,7 @@ const ProductManagement = () => {
   const { toast } = useToast();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,11 +40,11 @@ const ProductManagement = () => {
       image_url: '',
       health_rating: '3'
     });
-    setImageFile(null);
+    setSelectedImage(null);
     setImagePreview(null);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -55,7 +55,7 @@ const ProductManagement = () => {
         });
         return;
       }
-      setImageFile(file);
+      setSelectedImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -65,17 +65,20 @@ const ProductManagement = () => {
   };
 
   const uploadImage = async (): Promise<string | null> => {
-    if (!imageFile) return formData.image_url || null;
+    if (!selectedImage) return formData.image_url || null;
 
     try {
       setUploading(true);
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const fileExt = selectedImage.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('product-images')
-        .upload(filePath, imageFile);
+        .upload(filePath, selectedImage, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
@@ -100,7 +103,8 @@ const ProductManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const uploadedImageUrl = await uploadImage();
+    // Upload image if one is selected
+    const imageUrl = await uploadImage();
     
     const productData = {
       name: formData.name,
@@ -108,7 +112,7 @@ const ProductManagement = () => {
       price: parseFloat(formData.price),
       category: formData.category || null,
       stock_quantity: parseInt(formData.stock_quantity) || 0,
-      image_url: uploadedImageUrl,
+      image_url: imageUrl || null,
       health_rating: parseInt(formData.health_rating) || 3
     };
 
@@ -134,7 +138,7 @@ const ProductManagement = () => {
       health_rating: (product.health_rating || 3).toString()
     });
     setImagePreview(product.image_url || null);
-    setImageFile(null);
+    setSelectedImage(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -232,36 +236,41 @@ const ProductManagement = () => {
                 </div>
                 <div>
                   <Label htmlFor="image">Product Image</Label>
-                  <div className="space-y-2">
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/jpg"
-                      onChange={handleImageChange}
-                      className="cursor-pointer"
-                    />
-                    {imagePreview && (
-                      <div className="relative w-32 h-32 border rounded-md overflow-hidden">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
+                  <div className="mt-2">
+                    {imagePreview ? (
+                      <div className="relative inline-block">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="w-32 h-32 object-cover rounded-lg border"
                         />
                         <Button
                           type="button"
                           variant="destructive"
                           size="icon"
-                          className="absolute top-1 right-1 h-6 w-6"
+                          className="absolute -top-2 -right-2 h-6 w-6"
                           onClick={() => {
-                            setImageFile(null);
                             setImagePreview(null);
-                            setFormData({ ...formData, image_url: '' });
+                            setSelectedImage(null);
                           }}
                         >
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
+                    ) : (
+                      <Label htmlFor="image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
+                        <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Click to upload image</span>
+                        <span className="text-xs text-muted-foreground mt-1">Max 5MB</span>
+                      </Label>
                     )}
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={uploading}>
@@ -374,54 +383,59 @@ const ProductManagement = () => {
                   onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
                 />
               </div>
-                <div>
-                  <Label htmlFor="edit-health_rating">Health Rating (1-5 stars)</Label>
+              <div>
+                <Label htmlFor="edit-health_rating">Health Rating (1-5 stars)</Label>
+                <Input
+                  id="edit-health_rating"
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={formData.health_rating}
+                  onChange={(e) => setFormData({ ...formData, health_rating: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-image">Product Image</Label>
+                <div className="mt-2">
+                  {imagePreview ? (
+                    <div className="relative inline-block">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="w-32 h-32 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => {
+                          setImagePreview(null);
+                          setSelectedImage(null);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Label htmlFor="edit-image" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
+                      <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Click to upload image</span>
+                      <span className="text-xs text-muted-foreground mt-1">Max 5MB</span>
+                    </Label>
+                  )}
                   <Input
-                    id="edit-health_rating"
-                    type="number"
-                    min="1"
-                    max="5"
-                    value={formData.health_rating}
-                    onChange={(e) => setFormData({ ...formData, health_rating: e.target.value })}
+                    id="edit-image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/jpg"
+                    onChange={handleImageSelect}
+                    className="hidden"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="edit-image">Product Image</Label>
-                  <div className="space-y-2">
-                    <Input
-                      id="edit-image"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/jpg"
-                      onChange={handleImageChange}
-                      className="cursor-pointer"
-                    />
-                    {imagePreview && (
-                      <div className="relative w-32 h-32 border rounded-md overflow-hidden">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6"
-                          onClick={() => {
-                            setImageFile(null);
-                            setImagePreview(null);
-                            setFormData({ ...formData, image_url: '' });
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={uploading}>
-                  {uploading ? 'Uploading...' : 'Update Product'}
-                </Button>
+              </div>
+              <Button type="submit" className="w-full" disabled={uploading}>
+                {uploading ? 'Uploading...' : 'Update Product'}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
