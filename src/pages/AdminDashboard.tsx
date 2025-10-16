@@ -158,7 +158,7 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
+        {/* <div className="grid grid-cols-1 gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Recent Orders</CardTitle>
@@ -208,7 +208,7 @@ const AdminDashboard = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Product Management Dialog */}
         <Dialog open={activeDialog === 'products'} onOpenChange={() => setActiveDialog(null)}>
