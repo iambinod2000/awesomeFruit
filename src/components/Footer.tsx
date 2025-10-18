@@ -30,7 +30,7 @@ const Footer = () => {
                 className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors"
               >
                 <Phone className="h-4 w-4" />
-                <span>+1 (234) 567-8900</span>
+                <span>(+61) 0452514257</span>
               </a>
               <a 
                 href="mailto:info@alluring-fruits.com" 
@@ -41,7 +41,7 @@ const Footer = () => {
               </a>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>123 Fresh Market St, City, ST 12345</span>
+                <span>12 street, Adelaide, SA</span>
               </div>
             </div>
           </div>

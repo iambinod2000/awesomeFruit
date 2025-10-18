@@ -62,12 +62,12 @@ const Hero = () => {
           <div className="relative">
             <div className="relative z-10">
               <img
-                src="/placeholder.svg"
+                src="/home-image.webp"
                 alt="Fresh cut fruits"
                 className="w-full h-96 object-cover rounded-2xl shadow-2xl animate-float"
               />
               <div className="absolute -bottom-6 -right-6 bg-gradient-fresh text-white p-4 rounded-xl shadow-lg">
-                <div className="text-2xl font-bold">₹299</div>
+                <div className="text-2xl font-bold">₹29</div>
                 <div className="text-sm opacity-90">Per kg</div>
               </div>
             </div>
